@@ -12,7 +12,7 @@ To begin, we must install Ganache, which will serve as a network for my metamask
 
 ## Description
 
-### Server.js
+### Server.js file
 
 	//Express framework in JavaScript
 	const express = require("express");
@@ -30,7 +30,7 @@ To begin, we must install Ganache, which will serve as a network for my metamask
 This project shows how to use the Express framework to create a simple web server in JavaScript. Express is a popular Node.js framework that makes it easier to create web applications and APIs. In the project directory, run the following command to start the Express server: 'npm start' is a command. The server will listen on a specified port (in this case, port 2811) and print the port number in the console. This project's Express server defines a single route that handles requests to the root URL ("/"). When a client sends a GET request to the root URL, the server returns the index.html file from the project directory. To change the server's behaviour or add new routes, you can change the app.get() function. When a request is made to the specified route, the callback function within app.get() is executed. Within this callback function, you can define the desired response logic. 
 
 
-### Simple.sol
+### Smart.sol
 
     // SPDX-License-Identifier: MIT
     pragma solidity ^0.8.0;
