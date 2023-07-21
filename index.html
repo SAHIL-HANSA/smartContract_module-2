@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LINK TO METAMASK</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.2.7-rc.0/web3.min.js"></script>
+    <style>
+        body {
+            background-image: linear-gradient(45deg, rgba(13, 0, 61,0.2) 0%, rgba(13, 0, 61,0.2) 16.667%,rgba(14, 79, 102,0.2) 16.667%, rgba(14, 79, 102,0.2) 33.334%,rgba(15, 158, 143,0.2) 33.334%, rgba(15, 158, 143,0.2) 50.001%,rgba(16, 198, 163,0.2) 50.001%, rgba(16, 198, 163,0.2) 66.668%,rgba(15, 119, 122,0.2) 66.668%, rgba(15, 119, 122,0.2) 83.335%,rgba(14, 40, 81,0.2) 83.335%, rgba(14, 40, 81,0.2) 100.002%),linear-gradient(22.5deg, rgba(13, 0, 61,0.2) 0%, rgba(13, 0, 61,0.2) 16.667%,rgba(14, 79, 102,0.2) 16.667%, rgba(14, 79, 102,0.2) 33.334%,rgba(15, 158, 143,0.2) 33.334%, rgba(15, 158, 143,0.2) 50.001%,rgba(16, 198, 163,0.2) 50.001%, rgba(16, 198, 163,0.2) 66.668%,rgba(15, 119, 122,0.2) 66.668%, rgba(15, 119, 122,0.2) 83.335%,rgba(14, 40, 81,0.2) 83.335%, rgba(14, 40, 81,0.2) 100.002%),linear-gradient(0deg, rgba(13, 0, 61,0.2) 0%, rgba(13, 0, 61,0.2) 16.667%,rgba(14, 79, 102,0.2) 16.667%, rgba(14, 79, 102,0.2) 33.334%,rgba(15, 158, 143,0.2) 33.334%, rgba(15, 158, 143,0.2) 50.001%,rgba(16, 198, 163,0.2) 50.001%, rgba(16, 198, 163,0.2) 66.668%,rgba(15, 119, 122,0.2) 66.668%, rgba(15, 119, 122,0.2) 83.335%,rgba(14, 40, 81,0.2) 83.335%, rgba(14, 40, 81,0.2) 100.002%),linear-gradient(90deg, rgb(73, 73, 73),rgb(94, 94, 94));
+            height: 100vh;
+            font-size: 21px;
+            text-align: center;
+        }
+        .button {
+        appearance: none;
+        background-color: #FFFFFF;
+        border-radius: 40em;
+        border-style: none;
+        box-shadow: #ADCFFF 0 -12px 6px inset;
+        box-sizing: border-box;
+        color: #000000;
+        cursor: pointer;
+        display: inline-block;
+        font-family: -apple-system,sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        letter-spacing: -.24px;
+        margin: 0;
+        outline: none;
+        padding: 1rem 1.3rem;
+        quotes: auto;
+        text-align: center;
+        text-decoration: none;
+        transition: all .15s;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        }
+        .button:hover {
+        background-color: #FFC229;
+        box-shadow: #b41908 0 -6px 8px inset;
+        transform: scale(1.125);
+        }
+        .button:active {
+        transform: scale(1.025);
+        }
+        @media (min-width: 768px) {
+        .button {
+            font-size: 1.5rem;
+            padding: .75rem 2rem;
+        }
+        }
+
+    </style>
+</head>
+<body>
+    <button class="button" onclick="connectMetamask()">METAMASK LINKAGE</button> <br>
+    <p id="accountArea"></p>
+    <button class="button" onclick="connectContract()">SMART CONTRACT CONNECT</button> <br>
+    <p id="contractArea"></p>
+    <button class="button" onclick="trackAddress()">TRACK LAST ADDRESS</button> <br>
+    <p id="addressArea"></p>
+    <button class="button" onclick="getNumberOfSites()">GET CONNECT SITES</button> <br>
+    <p id="getsiteArea"></p>
+    <button class="button" onclick="getConnectedNetwork()">GET CONNECT NETWORK</button> <br>
+    <p id="networkArea"></p>
+
+    <script>
+        let account;
+
+        // Metamask Linkage
+        const connectMetamask = async () => {
+            if (window.ethereum !== "undefined") {
+                const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+                account = accounts[0];
+                document.getElementById("accountArea").innerHTML = account;
+            }
+        };
+
+        // Smart contract connection
+        const connectContract = async () => {
+            const ABI = [
+            {
+                "inputs": [
+                    {
+                        "internalType": "string",
+                        "name": "_network",
+                        "type": "string"
+                    }
+                ],
+                "name": "setConnectedNetwork",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "_sites",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "setNumberOfSites",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "stateMutability": "nonpayable",
+                "type": "constructor"
+            },
+            {
+                "inputs": [],
+                "name": "connectedNetwork",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "getConnectedNetwork",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "getNumberOfSites",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "numberOfSites",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "owner",
+                "outputs": [
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+            
+            const Address = "0xD23102345b57AC3E2b612F58b5856E4d43Cf6504";
+            window.web3 = await new Web3(window.ethereum);
+            contract = await new window.web3.eth.Contract(ABI, Address);
+            document.getElementById("contractArea").innerHTML = "Connected to smart contract";
+        };
+
+
+        // Track last transaction address
+        const trackAddress = async () => {
+            if (window.web3) {
+                try {
+                    const latestBlockNumber = await window.web3.eth.getBlockNumber();
+                    const latestBlock = await window.web3.eth.getBlock(latestBlockNumber);
+                    if (latestBlock.transactions.length > 0) {
+                        const latestTransactionHash = latestBlock.transactions[0];
+                        const transaction = await window.web3.eth.getTransaction(latestTransactionHash);
+                        document.getElementById("addressArea").innerHTML = `Recipient Address: ${transaction.to}`;
+                    } else {
+                        document.getElementById("addressArea").innerHTML = "No transactions found in the latest block.";
+                    }
+                } catch (error) {
+                    console.error("Error fetching transaction details:", error);
+                }
+            } else {
+                console.error("Web3 is not available. Please connect to Metamask.");
+            }
+        };
+
+
+        //Get connected Sites
+
+        const getNumberOfSites = async () => {
+            if (contract) {
+                const numberOfSites = await contract.methods.getNumberOfSites().call();
+                document.getElementById("getsiteArea").innerHTML = `Number of Sites: ${numberOfSites}`;
+            } else {
+                console.error("Smart contract is not connected. Please connect to the contract first.");
+            }
+        };
+
+
+        // Get the network conected to metamask
+        const getConnectedNetwork = async () => {
+            if (contract) {
+                const connectedNetwork = await contract.methods.getConnectedNetwork().call();
+                document.getElementById("networkArea").innerHTML = `Connected Network: ${connectedNetwork}`;
+            } else {
+                console.error("Smart contract is not connected. Please connect to the contract first.");
+            }
+        };
+
+    </script>
+</body>
+</html>
