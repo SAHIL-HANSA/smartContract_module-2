@@ -1,0 +1,35 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract MetaMaskInfo {
+    address public owner;
+    uint256 public numberOfSites;
+    string public connectedNetwork;
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the contract owner can call this function");
+        _;
+    }
+
+    function getNumberOfSites() public view returns (uint256) {
+        return numberOfSites;
+    }
+
+    function getConnectedNetwork() public view returns (string memory) {
+        return connectedNetwork;
+    }
+
+    // Function to set the number of sites connected to MetaMask wallet
+    function setNumberOfSites(uint256 _sites) public onlyOwner {
+        numberOfSites = _sites;
+    }
+
+    // Function to set the name of the network connected to MetaMask wallet
+    function setConnectedNetwork(string memory _network) public onlyOwner {
+        connectedNetwork = _network;
+    }
+}
