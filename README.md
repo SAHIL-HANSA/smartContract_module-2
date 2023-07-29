@@ -101,9 +101,9 @@ The contract's purpose is to provide a simple and decentralized way for users to
 
 ### index.html
 
-<!DOCTYPE html>
-<html>
-  <head>
+    <!DOCTYPE html>
+    <html>
+    <head>
     <meta charset="utf-8" />
     <title>LINK TO METAMASK</title>
     <script
@@ -202,8 +202,8 @@ The contract's purpose is to provide a simple and decentralized way for users to
         }
       }
     </style>
-  </head>
-  <body>
+    </head>
+    <body>
     <button class="button" onclick="connectMetamask()">METAMASK LINKAGE</button>
     <br />
     <p id="accountArea"></p>
