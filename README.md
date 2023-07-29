@@ -1,8 +1,8 @@
-# MetaMask Web Application with Express and Solidity Smart Contract
+# MetaMask Feedback Portal
 
 ## Overview
 
- This project demonstrates the integration of MetaMask, a popular cryptocurrency wallet and decentralized application platform, with a custom Solidity smart contract. The user can interact with the smart contract and display various information on the web page using the provided buttons. It serves as a basic example of how to interact with Ethereum blockchain data and smart contracts using JavaScript and Web3.js within a web application.
+This project serves as a practical demonstration of how the integration of MetaMask with a simple web application and smart contract deployment on the Ethereum blockchain can enable the creation of a decentralized feedback system. Users can securely submit feedback, query feedback data, and interact with the dApp without the need for a central authority, showcasing the power and potential of blockchain technology in building decentralized and trustless applications.
 
 ## Getting Start
 
@@ -23,7 +23,7 @@ To begin, we must install Ganache, which will serve as a network for my metamask
 	    res.sendFile(path.join(__dirname + "/index.html"));
 	})
 	
-	const server = app.listen(1725);
+	const server = app.listen(process.env.PORT || 2811);
 	const portNumber = server.address().port;
 	console.log(`port is running on ${portNumber}`);
 
@@ -37,8 +37,13 @@ This project shows how to use the Express framework to create a simple web serve
 
     contract MetaMaskInfo {
     address public owner;
-    uint256 public numberOfSites;
-    string public connectedNetwork;
+
+    struct Feedback {
+        uint8 rating; // Rating from 1 to 5
+        string comment;
+    }
+
+    mapping(address => Feedback[]) public userFeedbacks;
 
     constructor() {
         owner = msg.sender;
@@ -49,312 +54,430 @@ This project shows how to use the Express framework to create a simple web serve
         _;
     }
 
-    function getNumberOfSites() public view returns (uint256) {
-        return numberOfSites;
+
+    function submitFeedback(uint8 _rating, string memory _comment) public {
+        require(_rating >= 1 && _rating <= 5, "Invalid rating, please choose between 1 and 5");
+        require(bytes(_comment).length > 0, "Comment cannot be empty");
+
+        userFeedbacks[msg.sender].push(Feedback(_rating, _comment));
     }
 
-    function getConnectedNetwork() public view returns (string memory) {
-        return connectedNetwork;
+    function getUserFeedbackCount(address _user) public view returns (uint256) {
+        return userFeedbacks[_user].length;
     }
 
-    // Function to set the number of sites connected to MetaMask wallet
-    function setNumberOfSites(uint256 _sites) public onlyOwner {
-        numberOfSites = _sites;
+    function getUserFeedback(address _user, uint256 _index) public view returns (uint8, string memory) {
+        require(_index < userFeedbacks[_user].length, "Invalid feedback index");
+        Feedback memory feedback = userFeedbacks[_user][_index];
+        return (feedback.rating, feedback.comment);
+    }
     }
 
-    // Function to set the name of the network connected to MetaMask wallet
-    function setConnectedNetwork(string memory _network) public onlyOwner {
-        connectedNetwork = _network;
-     }
-    }
+The provided Solidity smart contract is named "MetaMaskInfo," and it serves as a basic feedback system on the Ethereum blockchain. The contract allows users to submit feedback with a rating (ranging from 1 to 5) and a comment. This feedback is stored on-chain using a mapping that associates user addresses with arrays of "Feedback" structures.
 
+Key components of the smart contract:
 
-This Solidity smart contract is designed to store and manage information related to a user's MetaMask wallet. It includes the following functionalities:
+1. State Variables:
+   - `address public owner`: Stores the address of the contract owner, who has special privileges due to the `onlyOwner` modifier.
 
-1. Contract Variables:
-   - "owner": An Ethereum address representing the owner of the smart contract. It is set during contract deployment to the address of the account deploying the contract.
-   - "numberOfSites": An unsigned integer variable that stores the number of sites connected to the user's MetaMask wallet.
-   - "connectedNetwork": A string variable that stores the name of the network connected to the user's MetaMask wallet.
+2. Struct:
+   - `struct Feedback`: Defines the structure to hold feedback data, consisting of a uint8 rating and a string comment.
 
-2. Constructor:
-   - The contract constructor initializes the "owner" variable with the address of the account that deploys the contract.
+3. Mapping:
+   - `mapping(address => Feedback[]) public userFeedbacks`: Maps user addresses to arrays of feedback data. Each user can have multiple feedback entries stored in an array.
 
-3. Modifier:
-   - The "onlyOwner" modifier restricts access to certain functions so that only the contract owner (the account that deployed the contract) can call them. If other accounts attempt to call these functions, a "require" statement will prevent their execution.
+4. Constructor:
+   - The constructor sets the contract deployer's address as the `owner`.
 
-4. Public Functions:
-   - "getNumberOfSites()": A view function that allows anyone to read (view) the value of the "numberOfSites" variable.
-   - "getConnectedNetwork()": A view function that allows anyone to read (view) the value of the "connectedNetwork" variable.
+5. Modifiers:
+   - `modifier onlyOwner()`: Restricts access to certain functions, allowing only the contract owner to call them.
 
-5. Setter Functions:
-   - "setNumberOfSites(uint256 _sites)": A function that allows the contract owner to set the number of sites connected to the MetaMask wallet by providing a new value for the "numberOfSites" variable.
-   - "setConnectedNetwork(string memory _network)": A function that allows the contract owner to set the name of the network connected to the MetaMask wallet by providing a new value for the "connectedNetwork" variable.
+6. Functions:
+   - `submitFeedback`: Allows users to submit their feedback with a valid rating (1 to 5) and a non-empty comment. The feedback is added to the `userFeedbacks` mapping under the sender's address.
+   - `getUserFeedbackCount`: Enables users to retrieve the total number of feedback entries they have submitted.
+   - `getUserFeedback`: Allows users to retrieve specific feedback data based on the user's address and the index of the feedback entry in their array.
 
-The contract provides basic functionalities for storing and retrieving information related to the user's MetaMask wallet, with certain operations restricted to the contract owner. It could be integrated with a front-end application, such as the one shown earlier, to interact with the contract and display the stored information on a user interface.
-
+The contract's purpose is to provide a simple and decentralized way for users to provide feedback, which is then permanently recorded on the Ethereum blockchain. By leveraging blockchain technology, the contract ensures data transparency, immutability, and trustlessness, as no centralized authority can modify or delete the feedback entries once they are recorded. Users can interact with this feedback system using a blockchain wallet like MetaMask and query the contract to retrieve their feedback data.
 
 ### index.html
 
-	<!DOCTYPE html>
-    <html>
-    <head>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
     <title>LINK TO METAMASK</title>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.2.7-rc.0/web3.min.js"></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/web3@1.3.5/dist/web3.min.js"
+    ></script>
     <style>
-        body {
-            background-image: linear-gradient(45deg, rgba(13, 0, 61,0.2) 0%, rgba(13, 0, 61,0.2) 16.667%,rgba(14, 79, 102,0.2) 16.667%, rgba(14, 79, 102,0.2) 33.334%,rgba(15, 158, 143,0.2) 33.334%, rgba(15, 158, 143,0.2) 50.001%,rgba(16, 198, 163,0.2) 50.001%, rgba(16, 198, 163,0.2) 66.668%,rgba(15, 119, 122,0.2) 66.668%, rgba(15, 119, 122,0.2) 83.335%,rgba(14, 40, 81,0.2) 83.335%, rgba(14, 40, 81,0.2) 100.002%),linear-gradient(22.5deg, rgba(13, 0, 61,0.2) 0%, rgba(13, 0, 61,0.2) 16.667%,rgba(14, 79, 102,0.2) 16.667%, rgba(14, 79, 102,0.2) 33.334%,rgba(15, 158, 143,0.2) 33.334%, rgba(15, 158, 143,0.2) 50.001%,rgba(16, 198, 163,0.2) 50.001%, rgba(16, 198, 163,0.2) 66.668%,rgba(15, 119, 122,0.2) 66.668%, rgba(15, 119, 122,0.2) 83.335%,rgba(14, 40, 81,0.2) 83.335%, rgba(14, 40, 81,0.2) 100.002%),linear-gradient(0deg, rgba(13, 0, 61,0.2) 0%, rgba(13, 0, 61,0.2) 16.667%,rgba(14, 79, 102,0.2) 16.667%, rgba(14, 79, 102,0.2) 33.334%,rgba(15, 158, 143,0.2) 33.334%, rgba(15, 158, 143,0.2) 50.001%,rgba(16, 198, 163,0.2) 50.001%, rgba(16, 198, 163,0.2) 66.668%,rgba(15, 119, 122,0.2) 66.668%, rgba(15, 119, 122,0.2) 83.335%,rgba(14, 40, 81,0.2) 83.335%, rgba(14, 40, 81,0.2) 100.002%),linear-gradient(90deg, rgb(73, 73, 73),rgb(94, 94, 94));
-            height: 100vh;
-            font-size: 21px;
-            text-align: center;
-        }
-        .button {
+      body {
+        background-image: linear-gradient(
+            45deg,
+            rgba(13, 0, 61, 0.2) 0%,
+            rgba(13, 0, 61, 0.2) 16.667%,
+            rgba(14, 79, 102, 0.2) 16.667%,
+            rgba(14, 79, 102, 0.2) 33.334%,
+            rgba(15, 158, 143, 0.2) 33.334%,
+            rgba(15, 158, 143, 0.2) 50.001%,
+            rgba(16, 198, 163, 0.2) 50.001%,
+            rgba(16, 198, 163, 0.2) 66.668%,
+            rgba(15, 119, 122, 0.2) 66.668%,
+            rgba(15, 119, 122, 0.2) 83.335%,
+            rgba(14, 40, 81, 0.2) 83.335%,
+            rgba(14, 40, 81, 0.2) 100.002%
+          ),
+          linear-gradient(
+            22.5deg,
+            rgba(13, 0, 61, 0.2) 0%,
+            rgba(13, 0, 61, 0.2) 16.667%,
+            rgba(14, 79, 102, 0.2) 16.667%,
+            rgba(14, 79, 102, 0.2) 33.334%,
+            rgba(15, 158, 143, 0.2) 33.334%,
+            rgba(15, 158, 143, 0.2) 50.001%,
+            rgba(16, 198, 163, 0.2) 50.001%,
+            rgba(16, 198, 163, 0.2) 66.668%,
+            rgba(15, 119, 122, 0.2) 66.668%,
+            rgba(15, 119, 122, 0.2) 83.335%,
+            rgba(14, 40, 81, 0.2) 83.335%,
+            rgba(14, 40, 81, 0.2) 100.002%
+          ),
+          linear-gradient(
+            0deg,
+            rgba(13, 0, 61, 0.2) 0%,
+            rgba(13, 0, 61, 0.2) 16.667%,
+            rgba(14, 79, 102, 0.2) 16.667%,
+            rgba(14, 79, 102, 0.2) 33.334%,
+            rgba(15, 158, 143, 0.2) 33.334%,
+            rgba(15, 158, 143, 0.2) 50.001%,
+            rgba(16, 198, 163, 0.2) 50.001%,
+            rgba(16, 198, 163, 0.2) 66.668%,
+            rgba(15, 119, 122, 0.2) 66.668%,
+            rgba(15, 119, 122, 0.2) 83.335%,
+            rgba(14, 40, 81, 0.2) 83.335%,
+            rgba(14, 40, 81, 0.2) 100.002%
+          ),
+          linear-gradient(90deg, rgb(73, 73, 73), rgb(94, 94, 94));
+        height: 100vh;
+        font-size: 21px;
+        text-align: center;
+      }
+      .button {
         appearance: none;
-        background-color: #FFFFFF;
+        background-color: #ffffff;
         border-radius: 40em;
         border-style: none;
-        box-shadow: #ADCFFF 0 -12px 6px inset;
+        box-shadow: #adcfff 0 -12px 6px inset;
         box-sizing: border-box;
         color: #000000;
         cursor: pointer;
         display: inline-block;
-        font-family: -apple-system,sans-serif;
+        font-family: -apple-system, sans-serif;
         font-size: 1.2rem;
         font-weight: 700;
-        letter-spacing: -.24px;
+        letter-spacing: -0.24px;
         margin: 0;
         outline: none;
         padding: 1rem 1.3rem;
         quotes: auto;
         text-align: center;
         text-decoration: none;
-        transition: all .15s;
-        user-select: none;
+        transition: all 0.15s;
         -webkit-user-select: none;
+        user-select: none;
         touch-action: manipulation;
-        }
-        .button:hover {
-        background-color: #FFC229;
+      }
+      .button:hover {
+        background-color: #ffc229;
         box-shadow: #b41908 0 -6px 8px inset;
         transform: scale(1.125);
-        }
-        .button:active {
+      }
+      .button:active {
         transform: scale(1.025);
-        }
-        @media (min-width: 768px) {
+      }
+      @media (min-width: 768px) {
         .button {
-            font-size: 1.5rem;
-            padding: .75rem 2rem;
+          font-size: 1.5rem;
+          padding: 0.75rem 2rem;
         }
-        }
-
+      }
     </style>
-    </head>
-    <body>
-    <button class="button" onclick="connectMetamask()">METAMASK LINKAGE</button> <br>
+  </head>
+  <body>
+    <button class="button" onclick="connectMetamask()">METAMASK LINKAGE</button>
+    <br />
     <p id="accountArea"></p>
-    <button class="button" onclick="connectContract()">SMART CONTRACT CONNECT</button> <br>
+    <button class="button" onclick="connectContract()">
+      SMART CONTRACT CONNECT
+    </button>
+    <br />
     <p id="contractArea"></p>
-    <button class="button" onclick="trackAddress()">TRACK LAST ADDRESS</button> <br>
-    <p id="addressArea"></p>
-    <button class="button" onclick="getNumberOfSites()">GET CONNECT SITES</button> <br>
-    <p id="getsiteArea"></p>
-    <button class="button" onclick="getConnectedNetwork()">GET CONNECT NETWORK</button> <br>
-    <p id="networkArea"></p>
+    <button class="button" onclick="submitFeedback(5, 'Great job!')">
+      Submit Feedback
+    </button>
+    <br />
+    <p id="feedbackArea"></p>
+    <button class="button" onclick="getUserFeedbackCount()">
+      Get User Feedback Count
+    </button>
+    <br />
+    <p id="errorArea" style="color: red"></p>
+    <button class="button" onclick="getUserFeedback(0)">
+      Get User Feedback at Index 0
+    </button>
+    <br />
 
     <script>
-        let account;
+      let account;
 
-        // Metamask Linkage
-        const connectMetamask = async () => {
-            if (window.ethereum !== "undefined") {
-                const accounts = await ethereum.request({ method: "eth_requestAccounts" });
-                account = accounts[0];
-                document.getElementById("accountArea").innerHTML = account;
-            }
-        };
+      // Metamask Linkage
+      const connectMetamask = async () => {
+        if (window.ethereum !== "undefined") {
+          const accounts = await ethereum.request({
+            method: "eth_requestAccounts",
+          });
+          account = accounts[0];
+          document.getElementById("accountArea").innerHTML = account;
+        }
+      };
 
-        // Smart contract connection
-        const connectContract = async () => {
-            const ABI = [
-            {
-                "inputs": [
-                    {
-                        "internalType": "string",
-                        "name": "_network",
-                        "type": "string"
-                    }
-                ],
-                "name": "setConnectedNetwork",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "_sites",
-                        "type": "uint256"
-                    }
-                ],
-                "name": "setNumberOfSites",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "stateMutability": "nonpayable",
-                "type": "constructor"
-            },
-            {
-                "inputs": [],
-                "name": "connectedNetwork",
-                "outputs": [
-                    {
-                        "internalType": "string",
-                        "name": "",
-                        "type": "string"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "getConnectedNetwork",
-                "outputs": [
-                    {
-                        "internalType": "string",
-                        "name": "",
-                        "type": "string"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "getNumberOfSites",
-                "outputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "",
-                        "type": "uint256"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "numberOfSites",
-                "outputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "",
-                        "type": "uint256"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "owner",
-                "outputs": [
-                    {
-                        "internalType": "address",
-                        "name": "",
-                        "type": "address"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            }
+      // Smart contract connection
+      const connectContract = async () => {
+        const ABI = [
+          {
+            inputs: [
+              {
+                internalType: "uint8",
+                name: "_rating",
+                type: "uint8",
+              },
+              {
+                internalType: "string",
+                name: "_comment",
+                type: "string",
+              },
+            ],
+            name: "submitFeedback",
+            outputs: [],
+            stateMutability: "nonpayable",
+            type: "function",
+          },
+          {
+            inputs: [],
+            stateMutability: "nonpayable",
+            type: "constructor",
+          },
+          {
+            inputs: [
+              {
+                internalType: "address",
+                name: "_user",
+                type: "address",
+              },
+              {
+                internalType: "uint256",
+                name: "_index",
+                type: "uint256",
+              },
+            ],
+            name: "getUserFeedback",
+            outputs: [
+              {
+                internalType: "uint8",
+                name: "",
+                type: "uint8",
+              },
+              {
+                internalType: "string",
+                name: "",
+                type: "string",
+              },
+            ],
+            stateMutability: "view",
+            type: "function",
+          },
+          {
+            inputs: [
+              {
+                internalType: "address",
+                name: "_user",
+                type: "address",
+              },
+            ],
+            name: "getUserFeedbackCount",
+            outputs: [
+              {
+                internalType: "uint256",
+                name: "",
+                type: "uint256",
+              },
+            ],
+            stateMutability: "view",
+            type: "function",
+          },
+          {
+            inputs: [],
+            name: "owner",
+            outputs: [
+              {
+                internalType: "address",
+                name: "",
+                type: "address",
+              },
+            ],
+            stateMutability: "view",
+            type: "function",
+          },
+          {
+            inputs: [
+              {
+                internalType: "address",
+                name: "",
+                type: "address",
+              },
+              {
+                internalType: "uint256",
+                name: "",
+                type: "uint256",
+              },
+            ],
+            name: "userFeedbacks",
+            outputs: [
+              {
+                internalType: "uint8",
+                name: "rating",
+                type: "uint8",
+              },
+              {
+                internalType: "string",
+                name: "comment",
+                type: "string",
+              },
+            ],
+            stateMutability: "view",
+            type: "function",
+          },
         ];
-            
-            const Address = "0xD23102345b57AC3E2b612F58b5856E4d43Cf6504";
-            window.web3 = await new Web3(window.ethereum);
-            contract = await new window.web3.eth.Contract(ABI, Address);
-            document.getElementById("contractArea").innerHTML = "Connected to smart contract";
-        };
 
+        const Address = "0xb858eB95B9777cE5faA52001Ef26e0f5aE627798";
+        window.web3 = await new Web3(window.ethereum);
+        contract = await new window.web3.eth.Contract(ABI, Address);
+        document.getElementById("contractArea").innerHTML =
+          "Connected to smart contract";
+      };
 
-        // Track last transaction address
-        const trackAddress = async () => {
-            if (window.web3) {
-                try {
-                    const latestBlockNumber = await window.web3.eth.getBlockNumber();
-                    const latestBlock = await window.web3.eth.getBlock(latestBlockNumber);
-                    if (latestBlock.transactions.length > 0) {
-                        const latestTransactionHash = latestBlock.transactions[0];
-                        const transaction = await window.web3.eth.getTransaction(latestTransactionHash);
-                        document.getElementById("addressArea").innerHTML = `Recipient Address: ${transaction.to}`;
-                    } else {
-                        document.getElementById("addressArea").innerHTML = "No transactions found in the latest block.";
-                    }
-                } catch (error) {
-                    console.error("Error fetching transaction details:", error);
-                }
-            } else {
-                console.error("Web3 is not available. Please connect to Metamask.");
-            }
-        };
+      // Function to submit feedback
+      async function submitFeedback() {
+        try {
+          const rating = parseInt(prompt("Enter rating (1-5):"));
+          const comment = prompt("Enter feedback comment:");
+          if (isNaN(rating) || rating < 1 || rating > 5) {
+            document.getElementById("errorArea").innerHTML =
+              "Invalid rating. Please choose a rating between 1 and 5.";
+            return;
+          }
+          if (comment === "") {
+            document.getElementById("errorArea").innerHTML =
+              "Comment cannot be empty.";
+            return;
+          }
 
+          if (!contract) {
+            document.getElementById("errorArea").innerHTML =
+              "Smart contract not connected.";
+            return;
+          }
 
-        //Get connected Sites
+          // Call the smart contract's "submitFeedback" function
+          await contract.methods
+            .submitFeedback(rating, comment)
+            .send({ from: account });
+          document.getElementById("errorArea").innerHTML = "";
+          console.log("Feedback submitted successfully!");
+        } catch (error) {
+          document.getElementById("errorArea").innerHTML =
+            "Error submitting feedback: " + error.message;
+        }
+      }
 
-        const getNumberOfSites = async () => {
-            if (contract) {
-                const numberOfSites = await contract.methods.getNumberOfSites().call();
-                document.getElementById("getsiteArea").innerHTML = `Number of Sites: ${numberOfSites}`;
-            } else {
-                console.error("Smart contract is not connected. Please connect to the contract first.");
-            }
-        };
+      // Function to retrieve user feedback count
+      async function getUserFeedbackCount() {
+        try {
+          if (!contract) {
+            document.getElementById("errorArea").innerHTML =
+              "Smart contract not connected.";
+            return;
+          }
 
+          // Call the smart contract's "getUserFeedbackCount" function
+          const userFeedbackCount = await contract.methods
+            .getUserFeedbackCount(account)
+            .call();
+          document.getElementById("feedbackArea").innerHTML =
+            "User feedback count: " + userFeedbackCount;
+          document.getElementById("errorArea").innerHTML = "";
+          console.log("User feedback count:", userFeedbackCount);
+        } catch (error) {
+          document.getElementById("errorArea").innerHTML =
+            "Error getting user feedback count: " + error.message;
+        }
+      }
 
-        // Get the network conected to metamask
-        const getConnectedNetwork = async () => {
-            if (contract) {
-                const connectedNetwork = await contract.methods.getConnectedNetwork().call();
-                document.getElementById("networkArea").innerHTML = `Connected Network: ${connectedNetwork}`;
-            } else {
-                console.error("Smart contract is not connected. Please connect to the contract first.");
-            }
-        };
+      // Function to retrieve user feedback at a specific index
+      async function getUserFeedback() {
+        try {
+          const index = parseInt(prompt("Enter feedback index:"));
+          if (isNaN(index) || index < 0) {
+            document.getElementById("errorArea").innerHTML =
+              "Invalid index. Please enter a non-negative integer.";
+            return;
+          }
 
+          if (!contract) {
+            document.getElementById("errorArea").innerHTML =
+              "Smart contract not connected.";
+            return;
+          }
+
+          // Call the smart contract's "getUserFeedback" function
+          const feedback = await contract.methods
+            .getUserFeedback(account, index)
+            .call();
+          document.getElementById("feedbackArea").innerHTML =
+            "Feedback at index " +
+            index +
+            ": Rating - " +
+            feedback[0] +
+            ", Comment - " +
+            feedback[1];
+          document.getElementById("errorArea").innerHTML = "";
+          console.log("Feedback at index", index, ":", feedback);
+        } catch (error) {
+          document.getElementById("errorArea").innerHTML =
+            "Error getting user feedback: " + error.message;
+        }
+      }
     </script>
     </body>
     </html>
 
 
-This HTML file demonstrates a simple web page with buttons that interact with the MetaMask wallet and a Solidity smart contract deployed on the Ethereum blockchain.
 
-1. Metamask Linkage:
-   - The first button labeled "METAMASK LINKAGE" allows users to connect their MetaMask wallet to the web application.
-   - When the button is clicked, the JavaScript function "connectMetamask()" is triggered.
-   - If the user's MetaMask extension is available, the function requests access to the user's accounts and displays the account address in the paragraph with the id "accountArea."
+The provided HTML file contains a simple web application that demonstrates the integration of MetaMask and interaction with a smart contract deployed on the Ethereum blockchain. The application allows users to connect their MetaMask wallet, interact with the smart contract, and perform the following actions:
 
-2. Smart Contract Connection:
-   - The second button labeled "SMART CONTRACT CONNECT" establishes a connection with the deployed Solidity smart contract.
-   - The JavaScript function "connectContract()" is invoked when the button is clicked.
-   - The function interacts with the contract using the ABI (Application Binary Interface) and the contract address provided in the "Address" variable.
-   - A message "Connected to smart contract" is displayed in the paragraph with the id "contractArea" after the connection is successful.
+1. **Connect MetaMask**: Clicking the "METAMASK LINKAGE" button will prompt the user to connect their MetaMask wallet to the application. If the user grants permission, their Ethereum address will be displayed in the "accountArea" section.
 
-3. Track Last Transaction Address:
-   - The third button labeled "TRACK LAST ADDRESS" retrieves the recipient address of the latest transaction on the connected blockchain.
-   - The JavaScript function "trackAddress()" is called when the button is clicked.
-   - The function fetches the latest block number, gets the first transaction from the block (if any), and displays the recipient address in the paragraph with the id "addressArea."
+2. **Connect Smart Contract**: Clicking the "SMART CONTRACT CONNECT" button will connect the web application to a specific smart contract deployed at the address `0xb858eB95B9777cE5faA52001Ef26e0f5aE627798` on the Ethereum blockchain. If successful, the message "Connected to smart contract" will be displayed in the "contractArea" section.
 
-4. Get Connected Sites and Network:
-   - The fourth and fifth buttons labeled "GET CONNECT SITES" and "GET CONNECT NETWORK" interact with the smart contract to retrieve data.
-   - Clicking these buttons triggers the JavaScript functions "getNumberOfSites()" and "getConnectedNetwork()" respectively.
-   - The functions fetch the corresponding information from the smart contract and display it in the paragraphs with the ids "getsiteArea" and "networkArea" respectively.
+3. **Submit Feedback**: Clicking the "Submit Feedback" button will prompt the user to enter a rating (between 1 and 5) and a feedback comment. If valid data is provided and the smart contract is connected, the feedback will be submitted to the contract using the "submitFeedback" function. Any error or success messages will be displayed in the "errorArea" section.
 
-Overall, this HTML file showcases a simple user interface that allows users to interact with the MetaMask wallet and the deployed smart contract, providing an overview of how to integrate a web application with Ethereum blockchain data using Web3.js and MetaMask.
+4. **Get User Feedback Count**: Clicking the "Get User Feedback Count" button will retrieve the total number of feedback entries submitted by the connected MetaMask account. The count will be displayed in the "feedbackArea" section.
 
+5. **Get User Feedback at Index 0**: Clicking the "Get User Feedback at Index 0" button will prompt the user to enter an index number. The application will then fetch the feedback data at that index from the smart contract using the "getUserFeedback" function and display it in the "feedbackArea" section.
+
+Please note that to use this web application, users must have the MetaMask extension installed in their web browser and be connected to the Ethereum Mainnet or a compatible testnet. Additionally, the contract address (`0xb858eB95B9777cE5faA52001Ef26e0f5aE627798`) in the JavaScript code should correspond to the deployed smart contract that supports the functions mentioned in the code.
+
+The application provides a user-friendly interface for interacting with a blockchain-based feedback system and showcases how MetaMask can be used to interact with Ethereum smart contracts from a web browser.
 ## Lincense 
 
 This project is licensed under the MIT License.
