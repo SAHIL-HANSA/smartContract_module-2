@@ -3,8 +3,13 @@ pragma solidity ^0.8.0;
 
 contract MetaMaskInfo {
     address public owner;
-    uint256 public numberOfSites;
-    string public connectedNetwork;
+
+    struct Feedback {
+        uint8 rating; // Rating from 1 to 5
+        string comment;
+    }
+
+    mapping(address => Feedback[]) public userFeedbacks;
 
     constructor() {
         owner = msg.sender;
@@ -15,21 +20,21 @@ contract MetaMaskInfo {
         _;
     }
 
-    function getNumberOfSites() public view returns (uint256) {
-        return numberOfSites;
+
+    function submitFeedback(uint8 _rating, string memory _comment) public {
+        require(_rating >= 1 && _rating <= 5, "Invalid rating, please choose between 1 and 5");
+        require(bytes(_comment).length > 0, "Comment cannot be empty");
+
+        userFeedbacks[msg.sender].push(Feedback(_rating, _comment));
+ }
+
+    function getUserFeedbackCount(address _user) public view returns (uint256) {
+        return userFeedbacks[_user].length;
     }
 
-    function getConnectedNetwork() public view returns (string memory) {
-        return connectedNetwork;
-    }
-
-    // Function to set the number of sites connected to MetaMask wallet
-    function setNumberOfSites(uint256 _sites) public onlyOwner {
-        numberOfSites = _sites;
-    }
-
-    // Function to set the name of the network connected to MetaMask wallet
-    function setConnectedNetwork(string memory _network) public onlyOwner {
-        connectedNetwork = _network;
+    function getUserFeedback(address _user, uint256 _index) public view returns (uint8, string memory) {
+        require(_index < userFeedbacks[_user].length, "Invalid feedback index");
+        Feedback memory feedback = userFeedbacks[_user][_index];
+        return (feedback.rating, feedback.comment);
     }
 }
